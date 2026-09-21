@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!server/.env.supabase.example
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+
+# Private local photo uploads
+server/uploads/*
+!server/uploads/.gitkeep
+server/backups/
+
+# Local agent tooling and generated review artifacts
+.agents/
+.codex/
+.impeccable/
+impeccable-main/
+ui-ux-pro-max-skill-main/
+output/
+tmp/

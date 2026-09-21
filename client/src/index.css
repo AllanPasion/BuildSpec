@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --color-primary: #810f31;
+  --color-primary-deep: #5d0b24;
+  --color-accent: #af4963;
+  --color-surface-muted: #dedad4;
+  --color-scrollbar: #8b8782;
+  --color-canvas: #e8e7e2;
+  --color-vehicle-photo-bg: #e8e7e2;
+  --color-paper: #f8f7f3;
+  --color-ink: #151515;
+  --color-copy: #4d4d4d;
+  --color-line: #c8c7c2;
+  --color-rose-soft: #f2e4e8;
+  --color-error-soft: #f8e5e5;
+  --color-danger: #9d2630;
+  --color-focus: #810f31;
+  --color-success: #34704a;
+  --color-purchased: #5f5956;
+  --color-warning: #a64528;
+  --color-workshop: #17191c;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+  --radius-image: clamp(24px, 3vw, 44px);
+  --radius-photo-small: 24px;
+  --content-width: 1160px;
+  --font-display: "Chivo Mono", "Courier New", monospace;
+  --font-body: "Chivo Mono", "Courier New", monospace;
+  --motion-fast: 180ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  color-scheme: light;
+
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] {
+  --color-primary: #c75b79;
+  --color-primary-deep: #a63f5f;
+  --color-accent: #dc8199;
+  --color-surface-muted: #2b2927;
+  --color-scrollbar: #8d8882;
+  --color-canvas: #181817;
+  --color-vehicle-photo-bg: #181817;
+  --color-paper: #242321;
+  --color-ink: #f2f0ea;
+  --color-copy: #bbb8b0;
+  --color-line: #484742;
+  --color-rose-soft: #351c25;
+  --color-error-soft: #3b1d22;
+  --color-danger: #e16f78;
+  --color-focus: #e08aa3;
+  --color-success: #6eae82;
+  --color-purchased: #9b938e;
+  --color-warning: #df8b69;
+  --color-workshop: #101010;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-canvas);
+  scrollbar-color: var(--color-scrollbar) var(--color-canvas);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  color: #fff;
+  background: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

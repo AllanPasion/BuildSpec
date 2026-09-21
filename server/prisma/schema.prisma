@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ModificationStatus {
+  PLANNED
+  PURCHASED
+  INSTALLED
+}
+
+model Vehicle {
+  id                String         @id @default(uuid())
+  make              String
+  model             String
+  year              Int
+  variant           String         @default("")
+  engine            String         @default("")
+  transmission      String         @default("")
+  color             String         @default("")
+  nickname          String         @default("")
+  imageUrl          String         @default("")
+  finalImageUrl     String         @default("")
+  showcasePublished Boolean        @default(false)
+  showcasedAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  modifications     Modification[]
+}
+
+model Modification {
+  id              String             @id @default(uuid())
+  vehicleId       String
+  name            String
+  category        String
+  brand           String             @default("")
+  price           Float
+  status          ModificationStatus @default(PLANNED)
+  purchaseDate    String             @default("")
+  installDate     String             @default("")
+  installer       String             @default("")
+  installImageUrl String             @default("")
+  notes           String             @default("")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  vehicle         Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@index([status])
+}

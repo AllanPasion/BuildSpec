@@ -1,0 +1,10 @@
+{
+  "name": "buildspec",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/check-dev-ports.cjs && concurrently --kill-others -n API,WEB -c cyan,magenta \"npm --prefix server run dev\" \"npm --prefix client run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

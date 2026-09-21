@@ -11,14 +11,21 @@ BuildSpec is a personal car modification tracker. The React client sends vehicle
 
 ## Local setup
 
-1. Start PostgreSQL and create a database named `buildspec` if it does not already exist.
-2. Copy `server/.env.example` to `server/.env` and set `DATABASE_URL` to your PostgreSQL connection string. Adjust `PORT` and `CLIENT_URL` if needed.
-3. In `server/`, run `npm install` and `npm run db:migrate`. This creates a backup before applying migrations and stops if the backup fails.
-4. Optionally, run `npm run db:seed` to add a sample vehicle **only when the vehicle table is empty**. It skips an existing garage.
-5. Run `npm run dev` in `server/`.
-6. In a second terminal, run `npm install` and `npm run dev` in `client/`. The client uses `http://localhost:3000` as the API by default; set `VITE_API_URL` if the server uses another address.
+The ignored `server/.env` on this computer points to Supabase. On another machine, copy `server/.env.supabase.example` to `server/.env` and add the private database password.
 
-The client normally runs at `http://localhost:5173`. The API health endpoint is `http://localhost:3000/api/health`.
+From the project root, install dependencies once:
+
+```bash
+npm install
+npm --prefix server install
+npm --prefix client install
+```
+
+Then run `npm run dev` from the project root. This starts Express and Vite together in one terminal. Stop both with Ctrl+C. The command reports a clear error if either default port is already in use.
+
+Optionally, run `npm --prefix server run db:seed` to add a sample vehicle **only when the vehicle table is empty**. It skips an existing garage. The cloud database already contains real records, so seeding is unnecessary.
+
+The client normally runs at `http://localhost:5173`. The API health endpoint is `http://localhost:3000/api/health`. If the API uses another origin, set `VITE_API_URL` in `client/.env` and `CLIENT_URL` in `server/.env` to the client origin.
 
 ## Supabase migration
 

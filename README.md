@@ -4,26 +4,22 @@ BuildSpec is a personal car modification tracker. Its React website lets you man
 
 ## Run the website locally
 
-1. Start PostgreSQL and create a `buildspec` database.
-2. Copy `server/.env.example` to `server/.env`, then set `DATABASE_URL` to your private PostgreSQL connection string.
-3. Install and start the API from `server/`:
+1. Keep the private Supabase `DATABASE_URL` in `server/.env` (already configured on this computer). On another machine, use `server/.env.supabase.example` as a template.
+2. Install dependencies once from the project root:
 
    ```bash
-   cd server
    npm install
-   npm run db:migrate
+   npm --prefix server install
+   npm --prefix client install
+   ```
+
+3. Start the API and website together from the project root:
+
+   ```bash
    npm run dev
    ```
 
-4. In another terminal, install and start the website from `client/`:
-
-   ```bash
-   cd client
-   npm install
-   npm run dev
-   ```
-
-5. Open `http://localhost:5173`. The API runs at `http://localhost:3000` by default.
+4. Open `http://localhost:5173`. The API runs at `http://localhost:3000` by default. Stop both with Ctrl+C. If either port is already in use, stop the existing development server first.
 
 If the API uses another origin, copy `client/.env.example` to `client/.env` and set `VITE_API_URL`. Set `CLIENT_URL` in `server/.env` to the website's origin if it differs from the default. Restart the development servers after changing environment variables.
 

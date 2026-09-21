@@ -4,15 +4,16 @@ This folder contains the React and Vite website for BuildSpec, a personal car mo
 
 ## Run locally
 
-1. Set up and start the API using the instructions in [the project documentation](../docs/README.md). The website expects it at `http://localhost:3000` by default.
-2. From this `client` folder, install dependencies and start Vite:
+From the project root, install dependencies once and start both the API and website:
 
-   ```bash
-   npm install
-   npm run dev
-   ```
+```bash
+npm install
+npm --prefix server install
+npm --prefix client install
+npm run dev
+```
 
-3. Open `http://localhost:5173`.
+Open `http://localhost:5173`. The website expects the API at `http://localhost:3000` by default.
 
 If the API runs elsewhere, copy `.env.example` to `.env` and set `VITE_API_URL` to the API origin, such as `http://localhost:3000`. Restart Vite after changing environment variables. The API must allow the website's origin through its `CLIENT_URL` setting.
 

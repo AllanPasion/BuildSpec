@@ -1,6 +1,6 @@
 import { cloneElement, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { api, assetUrl, uploadPhoto } from './api'
+import { api, assetUrl, githubLoginUrl, uploadPhoto } from './api'
 import './App.css'
 
 const vehicleInitial = { make: '', model: '', year: '', variant: '', engine: '', transmission: '', color: '', nickname: '', imageUrl: '', finalImageUrl: '' }
@@ -41,6 +41,7 @@ function HeaderTotals() {
 function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [auth, setAuth] = useState({ loading: true, authenticated: false, configured: false, user: null, error: '' })
   const activeSection = location.pathname === '/showcase' ? 'showcase' : 'garage'
   const [notice, setNotice] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -54,6 +55,24 @@ function AppLayout() {
     if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
+
+  useEffect(() => {
+    let active = true
+    api('/auth/me').then((result) => {
+      if (active) setAuth({ loading: false, error: '', ...result })
+    }).catch((error) => {
+      if (active) setAuth({ loading: false, authenticated: false, configured: false, user: null, error: friendlyError(error, 'sign-in') })
+    })
+    return () => { active = false }
+  }, [])
+
+  async function signOut() {
+    try {
+      await api('/auth/logout', { method: 'POST' })
+      setAuth((current) => ({ ...current, authenticated: false, user: null }))
+      navigate('/')
+    } catch (error) { setNotice(friendlyError(error, 'sign-out')) }
+  }
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -146,22 +165,23 @@ function AppLayout() {
         <nav ref={headerNavRef} className="header-nav" aria-label="Primary"><Link className={`nav-link${activeSection === 'garage' ? ' nav-link--active' : ''}`} aria-current={activeSection === 'garage' ? 'page' : undefined} to="/">Garage</Link><Link className={`nav-link${activeSection === 'showcase' ? ' nav-link--active' : ''}`} aria-current={activeSection === 'showcase' ? 'page' : undefined} to="/showcase">Showcase</Link></nav>
         <Link className="brand" to="/"><span><span className="brand-name">BuildSpec</span><span className="brand-tagline">Automotive build archive</span></span></Link>
         <div className="header-utilities">
-          <HeaderTotals />
+          {auth.authenticated && <HeaderTotals />}
+          {auth.authenticated && <button className="signout-button" type="button" onClick={signOut} title={`Signed in as ${auth.user?.login || 'GitHub user'}`}>Sign out</button>}
           <button className="theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'} onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}><svg aria-hidden="true" viewBox="0 0 24 24">{theme === 'dark' ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" /></> : <path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z" />}</svg><span>{theme === 'dark' ? 'Light' : 'Dark'}</span></button>
           <button ref={menuButtonRef} className="mobile-menu-toggle" type="button" aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" onClick={toggleMobileMenu}><svg aria-hidden="true" viewBox="0 0 24 24">{mobileMenuOpen ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M5 7h14M5 12h14M5 17h14" />}</svg></button>
         </div>
       </div>
-      {(mobileMenuOpen || mobileMenuClosing) && <><button className={`mobile-drawer-backdrop${mobileMenuClosing ? ' is-closing' : ''}`} type="button" aria-label="Close navigation menu" tabIndex={mobileMenuClosing ? -1 : undefined} onClick={() => { closeMobileMenu(); menuButtonRef.current?.focus() }} /><aside id="mobile-navigation" className={`mobile-drawer${mobileMenuClosing ? ' is-closing' : ''}`} aria-label="Mobile navigation" aria-hidden={mobileMenuClosing} inert={mobileMenuClosing ? true : undefined}><span className="mobile-drawer__label">Navigate</span><nav><Link ref={drawerFirstLinkRef} className={activeSection === 'garage' ? 'is-active' : undefined} aria-current={activeSection === 'garage' ? 'page' : undefined} to="/" onClick={closeMobileMenu}>Garage</Link><Link className={activeSection === 'showcase' ? 'is-active' : undefined} aria-current={activeSection === 'showcase' ? 'page' : undefined} to="/showcase" onClick={closeMobileMenu}>Showcase</Link></nav></aside></>}
+      {(mobileMenuOpen || mobileMenuClosing) && <><button className={`mobile-drawer-backdrop${mobileMenuClosing ? ' is-closing' : ''}`} type="button" aria-label="Close navigation menu" tabIndex={mobileMenuClosing ? -1 : undefined} onClick={() => { closeMobileMenu(); menuButtonRef.current?.focus() }} /><aside id="mobile-navigation" className={`mobile-drawer${mobileMenuClosing ? ' is-closing' : ''}`} aria-label="Mobile navigation" aria-hidden={mobileMenuClosing} inert={mobileMenuClosing ? true : undefined}><span className="mobile-drawer__label">Navigate</span><nav><Link ref={drawerFirstLinkRef} className={activeSection === 'garage' ? 'is-active' : undefined} aria-current={activeSection === 'garage' ? 'page' : undefined} to="/" onClick={closeMobileMenu}>Garage</Link><Link className={activeSection === 'showcase' ? 'is-active' : undefined} aria-current={activeSection === 'showcase' ? 'page' : undefined} to="/showcase" onClick={closeMobileMenu}>Showcase</Link></nav>{auth.authenticated && <button className="mobile-signout" type="button" onClick={() => { closeMobileMenu(); signOut() }}>Sign out of {auth.user?.login || 'GitHub'}</button>}</aside></>}
     </header>
     {notice && <div className="toast" role="status"><strong>Done.</strong> {notice}<button type="button" onClick={() => setNotice('')} aria-label="Dismiss notification">×</button></div>}
     <main id="main-content" className="main-content"><Routes>
-      <Route path="/" element={<GaragePage />} />
-      <Route path="/showcase" element={<ShowcasePage />} />
-      <Route path="/vehicles/new" element={<VehicleFormPage />} />
-      <Route path="/vehicles/:id/edit" element={<VehicleFormPage />} />
-      <Route path="/vehicles/:id" element={<VehicleDashboardPage />} />
-      <Route path="/vehicles/:id/modifications/new" element={<ModificationFormPage />} />
-      <Route path="/modifications/:modificationId/edit" element={<ModificationFormPage />} />
+      <Route path="/" element={auth.loading ? <PageState title="Checking sign-in…">Opening your garage.</PageState> : auth.authenticated ? <GaragePage /> : <LoginPage auth={auth} />} />
+      <Route path="/showcase" element={<ShowcasePage authenticated={auth.authenticated} />} />
+      <Route path="/vehicles/new" element={auth.loading ? <PageState title="Checking sign-in…">Opening your garage.</PageState> : auth.authenticated ? <VehicleFormPage /> : <Navigate to="/" replace />} />
+      <Route path="/vehicles/:id/edit" element={auth.loading ? <PageState title="Checking sign-in…">Opening your garage.</PageState> : auth.authenticated ? <VehicleFormPage /> : <Navigate to="/" replace />} />
+      <Route path="/vehicles/:id" element={auth.loading ? <PageState title="Checking sign-in…">Opening your garage.</PageState> : auth.authenticated ? <VehicleDashboardPage /> : <Navigate to="/" replace />} />
+      <Route path="/vehicles/:id/modifications/new" element={auth.loading ? <PageState title="Checking sign-in…">Opening your garage.</PageState> : auth.authenticated ? <ModificationFormPage /> : <Navigate to="/" replace />} />
+      <Route path="/modifications/:modificationId/edit" element={auth.loading ? <PageState title="Checking sign-in…">Opening your garage.</PageState> : auth.authenticated ? <ModificationFormPage /> : <Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes></main>
     <footer className="app-footer"><div className="footer-meta"><strong>BuildSpec</strong><span>Personal automotive build archive</span><span>Philippines · 2026</span></div><span className="footer-wordmark" aria-hidden="true">BUILDSPEC</span></footer>
@@ -170,6 +190,11 @@ function AppLayout() {
 
 function PageState({ type = 'empty', title, children, action }) {
   return <section className={`page-state page-state--${type}`} role={type === 'error' ? 'alert' : 'status'}><h2>{title}</h2><p>{children}</p>{action}</section>
+}
+
+function LoginPage({ auth }) {
+  const authError = new URLSearchParams(window.location.search).get('auth_error')
+  return <section className="login-page"><span className="login-eyebrow">Private garage</span><h1>Your builds, your account.</h1><p>Sign in with the approved GitHub account to manage vehicles, parts, costs, and photos.</p>{authError && <p className="form-error" role="alert">{authError === 'denied' ? 'GitHub sign-in was cancelled. Try again when you are ready.' : 'GitHub sign-in could not finish. Please try again.'}</p>}{auth.error && <p className="form-error" role="alert">{auth.error}</p>}{auth.configured ? <a className="button button--primary" href={githubLoginUrl}>Continue with GitHub</a> : <p className="form-error" role="alert">GitHub sign-in needs its OAuth app credentials in the API environment.</p>}<Link className="login-showcase-link" to="/showcase">Browse completed builds →</Link></section>
 }
 
 function GaragePage() {
@@ -191,7 +216,7 @@ function GaragePage() {
   </>
 }
 
-function ShowcasePage() {
+function ShowcasePage({ authenticated }) {
   const [state, setState] = useState({ loading: true, error: '', vehicles: [] })
   const load = useCallback(async () => {
     setState((current) => ({ ...current, loading: true, error: '' }))
@@ -203,14 +228,14 @@ function ShowcasePage() {
     <div className="showcase-intro"><div><h1 id="showcase-title">Completed Builds</h1><p>Vehicles finished, photographed, and deliberately published from your garage.</p></div><strong>{state.vehicles.length} <span>published</span></strong></div>
     {state.loading && <PageState title="Opening the archive…">Loading your completed builds.</PageState>}
     {state.error && <PageState type="error" title="The showcase is unavailable" action={<Button onClick={load}>Try again</Button>}>{state.error}</PageState>}
-    {!state.loading && !state.error && state.vehicles.length === 0 && <PageState title="No published builds yet" action={<Link className="button button--primary" to="/">Return to your garage</Link>}>Install every tracked part, add a final photo, then publish the vehicle from its dashboard.</PageState>}
-    <div className="showcase-list">{state.vehicles.map((vehicle) => <ShowcaseCover key={vehicle.id} vehicle={vehicle} />)}</div>
+    {!state.loading && !state.error && state.vehicles.length === 0 && <PageState title="No published builds yet" action={authenticated && <Link className="button button--primary" to="/">Return to your garage</Link>}>Install every tracked part, add a final photo, then publish the vehicle from its dashboard.</PageState>}
+    <div className="showcase-list">{state.vehicles.map((vehicle) => <ShowcaseCover key={vehicle.id} vehicle={vehicle} authenticated={authenticated} />)}</div>
   </section>
 }
 
-function ShowcaseCover({ vehicle }) {
+function ShowcaseCover({ vehicle, authenticated }) {
   const completedDate = vehicle.completedAt ? new Intl.DateTimeFormat('en-PH', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${vehicle.completedAt}T00:00:00`)) : 'Completed build'
-  return <article className="showcase-cover"><img src={assetUrl(vehicle.finalImageUrl) || showcaseFallback} alt={`Completed ${vehicle.year} ${vehicle.make} ${vehicle.model}`} loading="lazy" decoding="async" /><div className="showcase-cover__body"><span className="showcase-cover__status">Completed build</span><h2>{vehicle.year} {vehicle.make} {vehicle.model}</h2><p>Completed {completedDate}</p><div className="showcase-cover__stats"><span><strong>{vehicle.installedCount}</strong> Installed parts</span><span><strong>{money.format(vehicle.currentCost)}</strong> Paid</span></div><Link className="button button--primary" to={`/vehicles/${vehicle.id}`}>View Build</Link></div></article>
+  return <article className="showcase-cover"><img src={assetUrl(vehicle.finalImageUrl) || showcaseFallback} alt={`Completed ${vehicle.year} ${vehicle.make} ${vehicle.model}`} loading="lazy" decoding="async" /><div className="showcase-cover__body"><span className="showcase-cover__status">Completed build</span><h2>{vehicle.year} {vehicle.make} {vehicle.model}</h2><p>Completed {completedDate}</p><div className="showcase-cover__stats"><span><strong>{vehicle.installedCount}</strong> Installed parts</span><span><strong>{money.format(vehicle.currentCost)}</strong> Paid</span></div>{authenticated && <Link className="button button--primary" to={`/vehicles/${vehicle.id}`}>View Build</Link>}</div></article>
 }
 
 function VehicleCard({ vehicle }) {

@@ -5,6 +5,7 @@ export async function api(path, options = {}) {
   const isFormData = options.body instanceof FormData
   const response = await fetch(`${baseUrl}/api${path}`, {
     ...options,
+    credentials: 'include',
     headers: { ...(isFormData ? {} : { 'Content-Type': 'application/json' }), ...options.headers },
   })
 
@@ -15,6 +16,8 @@ export async function api(path, options = {}) {
 
   return response.status === 204 ? null : response.json()
 }
+
+export const githubLoginUrl = `${baseUrl}/api/auth/github`
 
 export async function uploadPhoto(file) {
   const body = new FormData()

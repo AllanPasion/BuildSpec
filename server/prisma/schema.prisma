@@ -51,3 +51,13 @@ model Modification {
   @@index([vehicleId])
   @@index([status])
 }
+
+model AuthSession {
+  tokenHash    String   @id
+  githubUserId String
+  githubLogin  String
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([expiresAt])
+}

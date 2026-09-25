@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "check": "node --check server.js && node --check app.js && node --check db.js && node --check routes/health.js && node --check routes/vehicles.js && node --check routes/modifications.js && node --check routes/uploads.js && node --check prisma/seed.js && node --check scripts/backup.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check server.js && node --check app.js && node --check auth.js && node --check db.js && node --check routes/health.js && node --check routes/vehicles.js && node --check routes/modifications.js && node --check routes/uploads.js && node --check prisma/seed.js && node --check scripts/backup.js",
     "db:migrate": "npm run db:backup && prisma migrate dev",
     "db:deploy": "npm run db:backup && prisma migrate deploy",
     "db:backup": "node scripts/backup.js",

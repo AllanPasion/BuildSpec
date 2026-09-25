@@ -1,5 +1,6 @@
 const express = require('express');
 const prisma = require('../db');
+const { requireOwner } = require('../auth');
 
 const router = express.Router();
 const vehicleFields = ['make', 'model', 'year', 'variant', 'engine', 'transmission', 'color', 'nickname', 'imageUrl', 'finalImageUrl'];
@@ -38,13 +39,6 @@ function withSummary(vehicle) {
   };
 }
 
-router.get('/', async (request, response, next) => {
-  try {
-    const vehicles = await prisma.vehicle.findMany({ include: { modifications: true }, orderBy: { createdAt: 'asc' } });
-    response.json(vehicles.map(withSummary));
-  } catch (error) { next(error); }
-});
-
 router.get('/showcase/published', async (request, response, next) => {
   try {
     const vehicles = await prisma.vehicle.findMany({
@@ -54,6 +48,15 @@ router.get('/showcase/published', async (request, response, next) => {
     });
     return response.json(vehicles.map(withSummary).filter((vehicle) => vehicle.showcasePublished));
   } catch (error) { return next(error); }
+});
+
+router.use(requireOwner);
+
+router.get('/', async (request, response, next) => {
+  try {
+    const vehicles = await prisma.vehicle.findMany({ include: { modifications: true }, orderBy: { createdAt: 'asc' } });
+    response.json(vehicles.map(withSummary));
+  } catch (error) { next(error); }
 });
 
 router.get('/:id', async (request, response, next) => {

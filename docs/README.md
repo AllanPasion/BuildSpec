@@ -1,48 +1,82 @@
 # BuildSpec
 
-BuildSpec is a personal car modification tracker. The React client sends vehicle and modification requests to an Express API. Prisma stores those records in PostgreSQL. Uploaded photos are stored separately in `server/uploads/`.
+## 1. Overview
 
-## Documentation
+BuildSpec is a personal car modification tracker. A user can keep several vehicles in a garage, record planned, purchased, and installed parts, review costs and progress, and publish a finished vehicle to a showcase. The website uses React and Vite; an Express API uses Prisma and PostgreSQL. Monetary amounts are shown in Philippine pesos.
 
-- [Product overview](PRODUCT.md) and [proposal](01-proposal.md)
-- [Wireframes](02-wireframes.md)
-- [Design system](03-design-system.md), [design notes](DESIGN.md), and [visual PDF](buildspec-design-system.pdf)
-- [Project report](REPORT.md) and [weekly journal](journal/week-1.md)
+The private garage uses GitHub OAuth sign-in for one approved owner. Completed Builds is publicly viewable. The application runs locally; production deployment still needs hosted photo storage and deployment testing.
 
-## Local setup
+## 2. Setup and installation
 
-The ignored `server/.env` on this computer points to Supabase. On another machine, copy `server/.env.supabase.example` to `server/.env` and add the private database password.
+Install Node.js and npm, Git, and access to a PostgreSQL database. PostgreSQL client tools such as `pg_dump` are needed for backups. The private database URL belongs in `server/.env`; use the repository's `server/.env.example` for a local database or `server/.env.supabase.example` for a Supabase Session pooler connection. Do not commit credentials.
 
-From the project root, install dependencies once:
+Clone the [BuildSpec repository](https://github.com/AllanPasion/BuildSpec), then install dependencies from the project root:
 
 ```bash
+git clone https://github.com/AllanPasion/BuildSpec.git
+cd BuildSpec
 npm install
 npm --prefix server install
 npm --prefix client install
 ```
 
-Then run `npm run dev` from the project root. This starts Express and Vite together in one terminal. Stop both with Ctrl+C. The command reports a clear error if either default port is already in use.
+Create a GitHub OAuth App under GitHub **Settings → Developer settings → OAuth Apps**. For local development, use `http://localhost:5173` as the homepage and `http://localhost:3000/api/auth/github/callback` as the authorization callback. Add `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, and `GITHUB_ALLOWED_USER_ID` to `server/.env`. The committed examples show the required names and the approved owner's ID. Keep the client secret private.
 
-Optionally, run `npm --prefix server run db:seed` to add a sample vehicle **only when the vehicle table is empty**. It skips an existing garage. The cloud database already contains real records, so seeding is unnecessary.
+Apply the committed database migrations, including the session table, from the project root:
 
-The client normally runs at `http://localhost:5173`. The API health endpoint is `http://localhost:3000/api/health`. If the API uses another origin, set `VITE_API_URL` in `client/.env` and `CLIENT_URL` in `server/.env` to the client origin.
+```bash
+npm --prefix server run db:deploy
+```
 
-## Supabase migration
+The migration command runs a database backup first and requires `pg_dump`. The optional `npm --prefix server run db:seed` command adds a sample build only when the vehicle table is empty.
 
-The BuildSpec Supabase project now contains the two application tables, their two Prisma migration records, 6 vehicles, and 1 modification. The vehicle and modification records were verified against local PostgreSQL after import. The current ignored `server/.env` targets the Supabase Session pooler. The previous local database settings are preserved in the ignored `server/.env.local-backup` for rollback.
+## 3. How to run it
 
-To configure another machine or deployment, copy `server/.env.supabase.example` to its private environment settings, replace `YOUR_DATABASE_PASSWORD` with the database password from the project's **Connect** panel, and keep the URL private. Use the Session pooler on port 5432. For deployment, set `CLIENT_URL` to the deployed client origin. Run `npm run db:deploy` from `server/` to back up the remote `public` schema and apply any pending Prisma migrations. The imported migrations are already recorded as applied. `prisma migrate status` confirms the cloud schema is up to date.
+From the project root:
 
-The cloud tables have row level security enabled and no direct Data API access for anonymous or authenticated roles. The Express server accesses PostgreSQL directly. The server currently has no user login or API authorization, so protect the API before making it publicly reachable.
+```bash
+npm run dev
+```
 
-Six database photo fields still reference `/uploads/...` files on this computer. The photo binaries are outside PostgreSQL and have **not** been migrated to Supabase Storage. The current server also writes new uploads to local disk. Move the referenced files and update upload handling before deployment to a host with temporary storage.
+Open `http://localhost:5173` and sign in with the approved GitHub account to manage the garage. Other visitors can browse `/showcase` without signing in. The API runs at `http://localhost:3000` by default, and `http://localhost:3000/api/health` returns an API status response. Stop both development servers with Ctrl+C. The root command checks whether the default ports are already occupied.
 
-## Keeping your data
+If the origins differ, set `CLIENT_URL` in `server/.env` to the website origin and set `VITE_API_URL` in `client/.env` to the API origin. Update `GITHUB_CALLBACK_URL` and the GitHub OAuth App callback when the API origin changes. Restart the servers after changing environment variables. Never put a credential in a `VITE_` variable because it is included in browser code.
 
-Vehicle and modification records live in the PostgreSQL database selected by `DATABASE_URL`, not in the website's source files. Keep that database and connection string when reinstalling dependencies or rebuilding the client. `npm install` and `npm run dev` do not reset records. The sample seed now leaves an existing garage untouched.
+## 4. Features and usage
 
-Run `npm run db:backup` from `server/` whenever you want a manual backup. It uses `pg_dump`, so PostgreSQL client tools must be installed. Backups go into the ignored `server/backups/` directory. Each backup contains a PostgreSQL custom-format archive and a copy of `server/uploads/`.
+1. Sign in with the approved GitHub account, open **Garage**, and add a vehicle with its year, make, and model. Other specifications and a garage photo are optional.
+2. Open the vehicle dashboard and add modifications. Each part has a name, category, price, and Planned, Purchased, or Installed status. Optional details include brand, purchase date, installer, notes, and an installed-part photo. Installed parts require an installation date.
+3. Review installed progress, status counts, paid cost, and all-parts cost. Search, filter, and sort the modification list; edit or delete records when the build changes.
+4. Add a final build portrait once every tracked modification is installed, then explicitly publish the vehicle to **Completed Builds**. Publishing can be reversed.
 
-Do not use `prisma migrate reset` on a database with data you want to keep; it recreates the schema and removes records. The project migration commands back up the database before applying pending migrations. Keep another copy of important backups outside this workspace before changing database setup, deleting the project, or moving computers. A database backup alone does not include uploaded photos.
+The website also has mobile navigation, light and dark themes, form validation, delete confirmations, loading and error states, and local drafts for new forms. The API accepts JPG, PNG, and WebP uploads up to 8 MB. Sign-out ends the server-side session. Private garage photos require owner sign-in; a published showcase portrait is public.
 
-The old version of this README described a documentation-only project. The app, Prisma schema, and migrations now exist.
+The main website routes are `/`, `/showcase`, `/vehicles/new`, `/vehicles/:id`, `/vehicles/:id/edit`, `/vehicles/:id/modifications/new`, and `/modifications/:modificationId/edit`. The API provides health, authentication, vehicle, modification, showcase, and upload routes under `/api/`.
+
+## 5. Project structure
+
+```text
+BuildSpec/
+|-- client/             React website and static assets
+|-- server/             Express API, GitHub OAuth, Prisma schema and migrations
+|-- docs/               Proposal, wireframes, design system, reports, journals
+|-- scripts/            Development port check
+|-- README.md           Quick-start instructions
+`-- package.json        Command to start both development servers
+```
+
+The design-system reference is `docs/buildspec-design-system.pdf`. The proposal and wireframes are `docs/01-proposal.md` and `docs/02-wireframes.md`. The week 2 report and reflection are `docs/REPORT.md` and `docs/journal/week-2.md` in the repository.
+
+## 6. Screenshots
+
+The repository contains design documentation and application image assets, but no verified screenshot of the running week 2 application is included here. A submission screenshot should be captured from the actual local site after both servers are running.
+
+## 7. Known issues and next steps
+
+- Uploaded photos are stored in `server/uploads/`, outside PostgreSQL. They need persistent storage and migration before deployment to a host with temporary disk storage.
+- The authentication tests cover signed-out access, rejected origins, and invalid OAuth state; the main CRUD and publication flows still need automated tests.
+- A production deployment and its screenshots are not yet documented.
+
+For production, register the deployed GitHub callback URL, set `CLIENT_URL`, `GITHUB_CALLBACK_URL`, and `VITE_API_URL` to the deployed origins, and use HTTPS. If the website and API are on different sites, set `COOKIE_SAME_SITE=none`; otherwise keep `lax`.
+
+The server's `npm run db:backup` command writes database and upload backups into ignored `server/backups/`. Keep a separate copy of important backups. Avoid `prisma migrate reset` on a database whose records you want to preserve.

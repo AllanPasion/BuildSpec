@@ -1,0 +1,10 @@
+server/.env
+server/backups/
+server/uploads/
+.env.local
+.vercel/
+.git/
+node_modules/
+server/node_modules/
+client/node_modules/
+client/dist/

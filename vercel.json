@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "npm ci && npm --prefix server ci && npm --prefix client ci",
+  "buildCommand": "npm --prefix client run build",
+  "outputDirectory": "client/dist",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "regions": ["sin1"]
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index?__buildspec_route=api/:path*" },
+    { "source": "/uploads/:name", "destination": "/api/index?__buildspec_route=uploads/:name" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+}

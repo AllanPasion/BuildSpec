@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? window.location.origin : 'http://localhost:3000')
 const apiOrigin = new URL(baseUrl, window.location.origin).origin
 
 export async function api(path, options = {}) {
@@ -20,6 +20,16 @@ export async function api(path, options = {}) {
 export const githubLoginUrl = `${baseUrl}/api/auth/github`
 
 export async function uploadPhoto(file) {
+  const signed = await api('/uploads/sign', { method: 'POST', body: JSON.stringify({ type: file.type, size: file.size }) })
+  if (signed.mode === 'supabase') {
+    const response = await fetch(signed.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type, 'x-upsert': 'false', 'cache-control': 'max-age=3600' },
+      body: file,
+    })
+    if (!response.ok) throw new Error('Photo upload failed. Please try again.')
+    return { url: signed.url }
+  }
   const body = new FormData()
   body.append('photo', file)
   return api('/uploads', { method: 'POST', body })

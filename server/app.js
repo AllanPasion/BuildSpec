@@ -8,6 +8,7 @@ const modificationsRouter = require('./routes/modifications');
 const uploadsRouter = require('./routes/uploads');
 const { router: authRouter, requireOwner, requireClientOrigin } = require('./auth');
 const prisma = require('./db');
+const { photoBucket, photoStorageMode } = require('./storage');
 
 const app = express();
 
@@ -18,26 +19,32 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use('/uploads', async (request, response, next) => {
+async function sendPhoto(name, response) {
+  if (photoStorageMode() === 'local') {
+    return response.sendFile(path.join(__dirname, 'uploads', name));
+  }
+  const { data, error } = await photoBucket().createSignedUrl(name, 60);
+  if (error) {
+    if (String(error.statusCode) === '404' || error.status === 404) return response.status(404).send();
+    throw error;
+  }
+  return response.redirect(302, data.signedUrl);
+}
+
+app.get('/uploads/:name', async (request, response, next) => {
   try {
-    const name = request.path.slice(1);
+    const name = request.params.name;
     if (!/^[a-zA-Z0-9._-]+$/.test(name)) return response.status(404).send();
     const published = await prisma.vehicle.findFirst({ where: { showcasePublished: true, finalImageUrl: `/uploads/${name}` }, select: { id: true } });
-    if (published) return next();
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    response.setHeader('Cache-Control', published ? 'public, max-age=30' : 'private, no-store');
+    if (published) return await sendPhoto(name, response);
     return requireOwner(request, response, (error) => {
       if (error) return next(error);
-      response.locals.privateUpload = true;
-      return next();
+      return sendPhoto(name, response).catch(next);
     });
   } catch (error) { return next(error); }
 });
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  fallthrough: false,
-  maxAge: '1d',
-  setHeaders(response) {
-    if (response.locals.privateUpload) response.setHeader('Cache-Control', 'private, no-store');
-  },
-}));
 
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
@@ -64,6 +71,7 @@ app.use((error, request, response, next) => {
 
   if (error?.code === 'LIMIT_FILE_SIZE') return response.status(413).json({ error: 'That photo is larger than 8 MB. Choose a smaller image.' });
   if (error?.message === 'UNSUPPORTED_IMAGE') return response.status(400).json({ error: 'Choose a JPG, PNG, or WebP image.' });
+  if (error?.code === 'STORAGE_NOT_CONFIGURED') return response.status(503).json({ error: error.message });
 
   response.status(500).json({ error: 'The database request could not be completed.' });
 });

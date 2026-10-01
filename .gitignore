@@ -10,6 +10,7 @@ node_modules/
 # Build output
 dist/
 build/
+.vercel/
 
 # Logs
 *.log
@@ -43,3 +44,6 @@ impeccable-main/
 ui-ux-pro-max-skill-main/
 output/
 tmp/
+
+.vercel
+.env*

@@ -28,6 +28,6 @@ If the API runs elsewhere, copy `.env.example` to `.env` and set `VITE_API_URL` 
 
 ## Data and deployment
 
-The website reads and writes vehicles and modifications through the API. Uploaded photos are served by the API; browser storage holds only the theme preference and unfinished form drafts. Set `VITE_API_URL` to the deployed API origin when building for deployment. Vite embeds `VITE_` variables in browser code, so never put credentials in them.
+The website reads and writes vehicles and modifications through the API. In hosted mode, the API authorizes a photo upload and the browser sends the file directly to private Supabase Storage. Photo reads use short-lived signed redirects after the API checks access. Browser storage holds only the theme preference and unfinished form drafts. On a single-origin Vercel deployment, leave `VITE_API_URL` unset; the production build uses its own origin. Set it only when the API has a different origin. Vite embeds `VITE_` variables in browser code, so never put credentials in them.
 
 See [the project documentation](../docs/README.md) for database setup, backups, and deployment limitations.

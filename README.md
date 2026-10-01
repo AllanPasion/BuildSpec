@@ -1,10 +1,10 @@
 # BuildSpec
 
-BuildSpec is a personal car modification tracker. Its React website lets you manage vehicles, record planned and installed modifications, track parts costs, upload photos, and view a showcase. An Express API stores vehicle and modification data in PostgreSQL.
+BuildSpec is a personal car modification tracker. Its React website lets you manage vehicles, record planned and installed modifications, track parts costs, upload photos, and view a showcase. An Express API stores vehicle and modification data in PostgreSQL. Photos can be stored in a private Supabase Storage bucket while the API controls who can view them.
 
 ## Run the website locally
 
-1. Keep the private Supabase `DATABASE_URL` in `server/.env` (already configured on this computer). On another machine, use `server/.env.supabase.example` as a template.
+1. Keep the private Supabase `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` in `server/.env` (already configured on this computer). On another machine, use `server/.env.supabase.example` as a template. Set `PHOTO_STORAGE=supabase` for hosted photos.
 2. Create a GitHub OAuth App under **Settings → Developer settings → OAuth Apps**. Set its homepage URL to `http://localhost:5173` and authorization callback URL to `http://localhost:3000/api/auth/github/callback`. Add its client ID and client secret to `server/.env` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. The approved account ID is `186479337` (`AllanPasion`). Keep the secret out of Git.
 3. Install dependencies once from the project root:
 
@@ -35,4 +35,6 @@ If the API uses another origin, copy `client/.env.example` to `client/.env` and 
 
 Run `npm run build` in `client/` to create a production website in `client/dist/`. Set `VITE_API_URL` to the deployed API origin before building. Values beginning with `VITE_` are included in browser code, so keep credentials only in the server environment.
 
-GitHub OAuth authenticates the approved owner; server-side sessions live in Supabase Postgres. The published showcase stays public. For production, register the deployed callback URL in the GitHub OAuth App, set `GITHUB_CALLBACK_URL`, `CLIENT_URL`, and `VITE_API_URL` to the deployed origins, and use HTTPS. If the website and API are on different sites, set `COOKIE_SAME_SITE=none`; otherwise keep `lax`. Uploaded photos still live on the API server's local disk and need persistent storage before deployment.
+GitHub OAuth authenticates the approved owner; server-side sessions live in Supabase Postgres. The published showcase stays public. The 23 existing local photos were copied and verified in the private `buildspec-photos` bucket; their database paths did not change, and the local originals were kept. New hosted uploads go directly from the browser to Supabase using an owner-authorized signed URL.
+
+The site is live at [BuildSpec on Vercel](https://buildspec-garage.vercel.app). The former `buildspec-sigma.vercel.app` address redirects there. Production GitHub sign-in and sign-out have been verified. See [Vercel deployment](docs/DEPLOYMENT.md) for the production callback, environment settings, and remaining release checks.

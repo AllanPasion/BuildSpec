@@ -16,6 +16,26 @@ BuildSpec is a personal car modification tracker. It helps me plan parts for mul
 - Local photo storage for development or a private Supabase Storage bucket for hosted photos.
 - Vercel for the combined website and API deployment.
 
+### Screenshots
+
+**Owner sign-in** — garage editing is private, while visitors can browse completed builds without signing in.
+
+<img src="docs/screenshots/sign-in.png" alt="BuildSpec sign-in page with GitHub sign-in and a link to completed builds" width="900">
+
+**My Garage** — signed-in overview of vehicles, build progress, and the paid versus all-parts totals.
+
+<img src="docs/screenshots/garage.png" alt="BuildSpec My Garage showing two vehicle builds and the spending summary" width="900">
+
+**Vehicle build overview** — paid spending, installed progress, and modification counts for one car.
+
+<img src="docs/screenshots/vehicle-overview.png" alt="Desktop vehicle page showing the build overview, paid amount, progress bar, and modification counts" width="900">
+
+**Phone layout** — the same build overview reflows into a single column with a large Add Modification control.
+
+<img src="docs/screenshots/mobile-overview.jpg" alt="Phone view of the vehicle overview with spending, installed progress, and touch-friendly controls" width="320">
+
+These screenshots were taken at different points while the builds were being updated, so the spending totals are not identical in every image.
+
 ## 2. Setup and installation
 
 ### Prerequisites
